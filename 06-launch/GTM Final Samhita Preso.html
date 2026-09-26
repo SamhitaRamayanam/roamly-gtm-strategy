@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roamly Groups · Go-To-Market Final Project · Samhita</title>
+  <style>
+    :root {
+      --bg: #07162C;
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-blue: #3b82f6;
+      --accent-warm: #E07A2B;
+      --accent-warm-soft: rgba(224, 122, 43, 0.15);
+      --accent-green: #10B981;
+      --text: #ffffff;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      height: 100%;
+    }
+
+    /* Scroll Snap Deck */
+    .deck-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 100;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 12.5%;
+      background: linear-gradient(90deg, var(--accent-warm), var(--accent-blue));
+      transition: width 0.3s ease;
+    }
+
+    /* Side Nav Dots */
+    .nav-dots {
+      position: fixed;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 100;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot.active {
+      background: var(--accent-warm);
+      transform: scale(1.4);
+    }
+
+    /* Slides Layout */
+    section.slide {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3.5rem 5.5rem;
+      opacity: 0.15;
+      transform: translateY(15px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    section.slide.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .content-box {
+      max-width: 1140px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Header & Badges */
+    .brand-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.8rem;
+      background: rgba(224, 122, 43, 0.12);
+      border: 1px solid rgba(224, 122, 43, 0.35);
+      border-radius: 9999px;
+      color: #fb923c;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .slide-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-blue);
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 0.4rem;
+    }
+
+    h2 {
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h3::before {
+      content: "";
+      display: inline-block;
+      width: 3px;
+      height: 12px;
+      background: var(--accent-blue);
+      border-radius: 2px;
+    }
+
+    ul {
+      list-style: none;
+    }
+
+    ul li {
+      font-size: 0.85rem;
+      color: var(--text);
+      line-height: 1.45;
+      margin-bottom: 0.45rem;
+      position: relative;
+      padding-left: 1.1rem;
+    }
+
+    ul li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+
+    ul li strong {
+      color: #fff;
+    }
+
+    .callout {
+      border-left: 3px solid var(--accent-warm);
+      background: rgba(224, 122, 43, 0.08);
+      padding: 0.85rem 1.15rem;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.88rem;
+      margin-top: 0.85rem;
+      color: #f1f5f9;
+      line-height: 1.45;
+    }
+
+    .feature-strip {
+      display: flex;
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+
+    .strip-item {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 6px;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .strip-icon {
+      font-size: 1.1rem;
+      padding: 0.35rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+    }
+
+    .strip-text h4 {
+      font-size: 0.78rem;
+      color: #fff;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .strip-text p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--card-border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: top;
+    }
+
+    td:first-child {
+      font-weight: 600;
+      color: #e2e8f0;
+      width: 24%;
+    }
+
+    .asset-showcase {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .asset-frame {
+      width: 100%;
+      max-width: 440px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 24px 45px -12px rgba(0, 0, 0, 0.7);
+      background: #000;
+    }
+
+    .asset-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* SLIDE 6: Dedicated Visual Pricing Elements */
+    .stat-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .stat-badge {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .badge-organizer {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    .badge-guest {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .badge-host {
+      background: rgba(224, 122, 43, 0.15);
+      border: 1px solid rgba(224, 122, 43, 0.3);
+      color: #fb923c;
+    }
+
+    .stat-detail h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.15rem;
+    }
+
+    .stat-detail p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Tier Visual Comparison Cards */
+    .tier-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.35fr 1fr;
+      gap: 1rem;
+      align-items: stretch;
+      margin-bottom: 1.25rem;
+    }
+
+    .tier-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .tier-highlight {
+      background: linear-gradient(180deg, rgba(224, 122, 43, 0.1) 0%, rgba(7, 22, 44, 0.8) 100%);
+      border: 2px solid #E07A2B;
+      box-shadow: 0 12px 30px -8px rgba(224, 122, 43, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .tier-tag {
+      position: absolute;
+      top: -10px;
+      right: 15px;
+      background: #E07A2B;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .tier-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+
+    .tier-price {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #60a5fa;
+      margin-bottom: 0.75rem;
+    }
+
+    .tier-price span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .tier-features {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .tier-features li {
+      font-size: 0.78rem;
+      color: #cbd5e1;
+      padding-left: 1rem;
+      margin-bottom: 0.45rem;
+      line-height: 1.35;
+    }
+
+    .tier-features li::before {
+      content: "✓";
+      color: #10B981;
+      position: absolute;
+      left: 0;
+      font-size: 0.75rem;
+      font-weight: 900;
+    }
+
+    .research-strip {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 0.75rem 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .research-pill {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .keyboard-hint {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 5.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <nav class="nav-dots" id="navDots"></nav>
+
+  <main class="deck-container" id="deckContainer">
+
+    <!-- SLIDE 1: Title & Visual Asset -->
+    <section class="slide" id="slide-1">
+      <div class="content-box">
+        <div class="grid-2" style="align-items: center; gap: 2.75rem;">
+          <div>
+            <div class="brand-eyebrow">
+              <span>⛰️ Roamly Groups</span>
+              <span>•</span>
+              <span>GTM Launch Deck</span>
+            </div>
+            <h1>Samhita · Go-To-Market Final Project</h1>
+            <p class="subtitle" style="font-size: 1.15rem; color: #cbd5e1; margin-bottom: 1.25rem;">
+              Product Strategy & Launch Architecture: <strong>Roamly Groups</strong>
+            </p>
+
+            <div class="callout" style="margin-top: 0; margin-bottom: 1.25rem;">
+              <strong style="color: #fb923c; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.25rem;">Marketing Anchor Mantra</strong>
+              "SECURE YOUR EVENT. EMPOWER YOUR CREW. LET ROAMLY HANDLE THE REST."
+            </div>
+
+            <div class="card" style="padding: 0.9rem 1.1rem;">
+              <p style="font-size: 0.82rem; color: var(--text-muted);">Lead Presenter: <strong style="color: #fff;">Samhita</strong></p>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Launch Markets: <strong style="color: #fff;">San Juan (SJU) · Scottsdale (SDL) · Lisbon (LIS)</strong></p>
+              <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Date: <strong style="color: #fff;">September 26, 2026</strong></p>
+            </div>
+          </div>
+
+          <div class="asset-showcase">
+            <div class="asset-frame">
+              <img src="Visualt Asset .jpeg" alt="Roamly Groups Marketing Visual Asset" onerror="this.onerror=null; this.src='Visual Asset.jpeg';">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: GTM Strategy -->
+    <section class="slide" id="slide-2">
+      <div class="content-box">
+        <span class="slide-label">Slide 02 / Strategy</span>
+        <h2>GTM Strategy: Product-Led Checkout Rescue</h2>
+        <p class="subtitle">Converting high-intent group drop-offs into an organic acquisition loop.</p>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Motion & Strategic Rationale</h3>
+            <ul>
+              <li><strong>Motion:</strong> Product-led checkout interception triggered at carts with 4+ guests.</li>
+              <li><strong>Beachhead Segment:</strong> Reluctant Milestone Organizers coordinating 6–10 adult travelers.</li>
+              <li><strong>Strategic Shift:</strong> Streamlining coordination into an automated utility without financial risk.</li>
+              <li><strong>Core Wedge:</strong> 24-hour calendar hold with frictionless mobile guest checkout.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Executive One-Pager Summary</h3>
+            <ul>
+              <li><strong>The Bottleneck:</strong> Solitary planners abandon carts rather than floating $1k+ on personal cards.</li>
+              <li><strong>The Mechanical Fix:</strong> Hold slots for 24h; attendees pay their exact split individually via web link.</li>
+              <li><strong>V1 Guardrails:</strong> Strict 24h expiration, zero app install requirements, no messy in-app chat forums.</li>
+              <li><strong>Target Success Metric:</strong> ≥65% Checkout Completion across pilot destinations.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="feature-strip">
+          <div class="strip-item">
+            <span class="strip-icon">⏱️</span>
+            <div class="strip-text">
+              <h4>24-Hour Hold Lock</h4>
+              <p>Reserve peak inventory with zero deposit</p>
+            </div>
+          </div>
+          <div class="strip-item">
+            <span class="strip-icon">🛡️</span>
+            <div class="strip-text">
+              <h4>Zero Credit Risk</h4>
+              <p>Platform auto-collects from each guest</p>
+            </div>
+          </div>
+          <div class="strip-item">
+            <span class="strip-icon">⚡</span>
+            <div class="strip-text">
+              <h4>15s Mobile Splits</h4>
+              <p>No Venmo chasing or mandatory apps</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: Competitive Intelligence & Strategic Bet -->
+    <section class="slide" id="slide-3">
+      <div class="content-box">
+        <span class="slide-label">Slide 03 / Competitive Advantage</span>
+        <h2>Competitive Intelligence & Strategic Bet</h2>
+        <p class="subtitle">Exploiting incumbent distribution blind spots and execution friction.</p>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Battlecard: Airbnb Experiences Vulnerability</h3>
+            <ul>
+              <li><strong>Incumbent Edge:</strong> Controls lodging chronology; captures travel discovery at zero CAC.</li>
+              <li><strong>Incumbent Flaw:</strong> Walled garden forces single-card checkout and mandatory app signups for all guests.</li>
+              <li><strong>Coordination Friction:</strong> Planners must manually debt-collect via Venmo or risk open slots selling out.</li>
+              <li><strong>Inventory Mismatch:</strong> Saturated with solo/low-cost tours rather than un-fuck-upable private buyouts.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>The Strategic Bet</h3>
+            <div class="callout" style="margin-top: 0; font-size: 0.85rem;">
+              <strong>"We bet Roamly Groups wins by</strong> becoming the default coordination engine for high-stakes centerpiece celebrations—partnering upstream with vacation rental platforms to intercept planners post-lodging, removing personal credit liability, and turning social enforcement into our primary conversion engine."
+            </div>
+            <ul style="margin-top: 1rem;">
+              <li><strong>Sacrifice 1:</strong> Collaborative consensus tools (no endless chat/debates).</li>
+              <li><strong>Sacrifice 2:</strong> Low-cost, generic catalog tours ($30 solo walks).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: Positioning -->
+    <section class="slide" id="slide-4">
+      <div class="content-box">
+        <span class="slide-label">Slide 04 / Positioning</span>
+        <h2>Positioning Framework & Architecture</h2>
+        <p class="subtitle">Reframing group coordination from administrative overhead to automated utility.</p>
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <h3>The Finalized Positioning Statement</h3>
+          <p style="font-size: 0.9rem; line-height: 1.6; color: #f1f5f9;">
+            For <strong>lead planners coordinating milestone celebrations</strong>, Roamly Groups is a <strong>frictionless group reservation utility</strong> that holds private calendar dates while collecting individual payments. Unlike traditional platforms that force one organizer to front the bill or mandate app downloads, Roamly eliminates personal liability through an open, 15-second guest payment link.
+          </p>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>The From/To Market Shift</h3>
+            <ul>
+              <li><strong>FROM:</strong> Trip organizers act as unpaid debt collectors, bearing 100% financial liability and tracking manual transfers.</li>
+              <li><strong>TO:</strong> Coordination is an automated utility; organizers lock dates, participants self-settle, and the platform enforces collection.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>The One-Liner Marketing Mantra</h3>
+            <div class="callout" style="margin-top: 0.25rem; border-left-color: var(--accent-warm);">
+              <strong style="color: #fb923c; font-size: 1.05rem;">"Secure your event. Empower your crew. Let Roamly handle the rest."</strong>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">
+              Replaces administrative anxiety with structured relief and operational confidence.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: Messaging -->
+    <section class="slide" id="slide-5">
+      <div class="content-box">
+        <span class="slide-label">Slide 05 / Messaging</span>
+        <h2>Audience Messaging Pillars & Asset</h2>
+        <p class="subtitle">Tailored value-capability-evidence architecture across all three marketplace participants.</p>
+        <div class="card" style="margin-bottom: 1rem; padding: 0.75rem;">
+          <table>
+            <thead>
+              <tr>
+                <th>Audience</th>
+                <th>Value Proposition (The Promise)</th>
+                <th>Capability (The Mechanism)</th>
+                <th>Evidence (The Receipts)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Organizer</td>
+                <td>Social leverage & zero financial exposure.</td>
+                <td>24h Hold Lock + Auto-Split Engine.</td>
+                <td>Save 4.5h planning time; 0% card float.</td>
+              </tr>
+              <tr>
+                <td>Participant</td>
+                <td>Frictionless, transparent autonomy.</td>
+                <td>15s Guest Mobile Web Pay (Apple/Google Pay).</td>
+                <td>&lt;12 min average payment velocity.</td>
+              </tr>
+              <tr>
+                <td>Host</td>
+                <td>Calendar liquidity & guaranteed buyouts.</td>
+                <td>Auto-cover guarantee + strict 24h release.</td>
+                <td>&lt;5% slot release rate; +25% AOV lift.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>Generated Copy Asset (High-Intent Paid Search Intercept)</h3>
+          <p style="font-size: 0.85rem; color: #cbd5e1; font-style: italic;">
+            "Save 4+ Hours Planning the Celebration. Discover community-upvoted private winery tours and boat charters. Reserve private dates with a 24-hour hold—zero credit card risk and zero Venmo chasing. Roamly Groups."
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: Pricing Recommendation (HIGH VISUAL IMPACT RE-DESIGN) -->
+    <section class="slide" id="slide-6">
+      <div class="content-box">
+        <span class="slide-label">Slide 06 / Commercial Architecture</span>
+        <h2>Hybrid Monetization & Packaging Engine</h2>
+        <p class="subtitle" style="margin-bottom: 1.25rem;">Zero top-of-funnel friction for organizers; monetization shifted to transaction value.</p>
+        
+        <!-- 3 Key Metric Badges -->
+        <div class="stat-bar">
+          <div class="stat-card">
+            <div class="stat-badge badge-organizer">$0</div>
+            <div class="stat-detail">
+              <h4>Organizer Access</h4>
+              <p>Zero software or upfront fees to lock a 24h hold with credit card pre-auth.</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-badge badge-guest">3-5%</div>
+            <div class="stat-detail">
+              <h4>Guest Split Fee</h4>
+              <p>Nominal $5–$8 processing fee embedded seamlessly at mobile-web checkout.</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-badge badge-host">15%</div>
+            <div class="stat-detail">
+              <h4>Host Take-Rate</h4>
+              <p>Marketplace commission deducted only upon guaranteed buyout completion.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tier Packaging Comparison Graphic -->
+        <div class="tier-grid">
+          <!-- Tier 1 -->
+          <div class="tier-box">
+            <div>
+              <div class="tier-name">Standard Catalog</div>
+              <div class="tier-price">0% <span>traveler fee</span></div>
+              <ul class="tier-features">
+                <li>Solo & pair public bookings</li>
+                <li>Standard 1-card checkout</li>
+                <li>15% host take-rate</li>
+              </ul>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">AOV: $35–$60</p>
+          </div>
+
+          <!-- Tier 2: The Core Hero (Highlighted) -->
+          <div class="tier-box tier-highlight">
+            <div class="tier-tag">★ Core Wedge (80% Volume)</div>
+            <div>
+              <div class="tier-name" style="color: #fb923c;">Roamly Groups Buyout</div>
+              <div class="tier-price" style="color: #fff;">$0 <span>organizer upfront + 4% split</span></div>
+              <ul class="tier-features">
+                <li><strong>24-Hour Calendar Hold Lock</strong></li>
+                <li><strong>No-login 15s guest checkout</strong> (Apple/Google Pay)</li>
+                <li><strong>Live SMS/WhatsApp payment ledger</strong></li>
+                <li>Community-upvoted itinerary badges</li>
+              </ul>
+            </div>
+            <p style="font-size: 0.72rem; color: #fde047; font-weight: 600; margin-top: 0.75rem;">AOV: $1,000–$3,500 Headline Events</p>
+          </div>
+
+          <!-- Tier 3 -->
+          <div class="tier-box">
+            <div>
+              <div class="tier-name">Concierge VIP</div>
+              <div class="tier-price">$99 <span>flat + 18% take-rate</span></div>
+              <ul class="tier-features">
+                <li>Extended 48-Hour hold locks</li>
+                <li>Multi-vendor custom bundling</li>
+                <li>Dedicated itinerary concierge</li>
+              </ul>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.75rem;">AOV: $4,000+ Luxury Villas</p>
+          </div>
+        </div>
+
+        <!-- Research & Validation Safeguard -->
+        <div class="research-strip">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="research-pill">Validation Research</span>
+            <p style="font-size: 0.8rem; color: #cbd5e1;">
+              <strong>Conjoint Analysis (N=400):</strong> Testing guest checkout velocity against the 3–5% split fee.
+            </p>
+          </div>
+          <p style="font-size: 0.75rem; color: #93c5fd; white-space: nowrap;">
+            <strong>Safeguard:</strong> If cart abandonment &gt; 5%, pivot immediately to host-absorbed retail pricing.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SLIDE 7: Individual Insights -->
+    <section class="slide" id="slide-7">
+      <div class="content-box">
+        <span class="slide-label">Slide 07 / Insights</span>
+        <h2>Strategic Insights & Execution Takeaways</h2>
+        <p class="subtitle">Overcoming friction points and pivoting toward sustainable market differentiation.</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Key Friction Points</h3>
+            <ul>
+              <li><strong>The "Consensus Trap":</strong> Realizing collaborative voting tools slow checkout; compliance drives conversion.</li>
+              <li><strong>Host Calendar Anxiety:</strong> Overcoming host fear of frozen dates with strict 24h drops and auto-cover backstops.</li>
+              <li><strong>Walled-Garden Temptation:</strong> Resisting forced app signups to maintain a 15-second guest pay flow.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>The Biggest "Aha" Moment</h3>
+            <div class="callout" style="margin-top: 0; font-size: 0.8rem; border-left-color: var(--accent-warm);">
+              <strong style="color: #fb923c;">"Airbnb doesn't win on superior curation; they win on chronology."</strong>
+            </div>
+            <ul style="margin-top: 0.75rem;">
+              <li>Lodging dictates when activities are planned.</li>
+              <li>Competing on generic search is a losing CAC battle.</li>
+              <li>We must intercept organizers at lodging confirmation.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Execution Takeaways</h3>
+            <ul>
+              <li><strong>Clear Sacrifices Define Strategy:</strong> Choosing what <em>not</em> to build protects velocity.</li>
+              <li><strong>Incentive Alignment:</strong> De-risking both the organizer (liability) and host (liquidity) creates conversion.</li>
+              <li><strong>Distribution Wedge:</strong> Upstream B2B2C property manager integrations beat direct search ads.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: Closing -->
+    <section class="slide" id="slide-8">
+      <div class="content-box" style="text-align: center;">
+        <div class="brand-eyebrow" style="margin-bottom: 1.25rem;">
+          <span>Better Trips Together</span>
+        </div>
+        <h1 style="font-size: 2.35rem; margin-bottom: 0.75rem;">Turning Group Coordination Into an Acquisition Loop.</h1>
+        <p class="subtitle" style="max-width: 720px; margin: 0 auto 2.25rem auto; font-size: 1.05rem; color: #cbd5e1; line-height: 1.5;">
+          "Roamly Groups wins by de-risking high-stakes private celebrations—removing organizer liability, streamlining guest payments, and securing guaranteed buyouts for hosts."
+        </p>
+        <div class="card" style="display: inline-block; padding: 1.5rem 3.5rem; border-color: rgba(224, 122, 43, 0.4);">
+          <h2 style="font-size: 1.45rem; margin-bottom: 0.35rem; color: #fff;">Thank You.</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Samhita · Roamly Groups GTM Strategy</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="keyboard-hint">Use ↑ / ↓ arrow keys to navigate</div>
+
+  <script>
+    const deck = document.getElementById('deckContainer');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const navDots = document.getElementById('navDots');
+    const progressBar = document.getElementById('progressBar');
+
+    // Build Navigation Dots
+    slides.forEach((slide, index) => {
+      const dot = document.createElement('div');
+      dot.classList.add('dot');
+      if (index === 0) dot.classList.add('active');
+      dot.addEventListener('click', () => {
+        slide.scrollIntoView({ behavior: 'smooth' });
+      });
+      navDots.appendChild(dot);
+    });
+
+    const dots = Array.from(document.querySelectorAll('.dot'));
+
+    // Intersection Observer for Slide Animations and Tracking
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          slides.forEach(s => s.classList.remove('active'));
+          entry.target.classList.add('active');
+
+          const index = slides.indexOf(entry.target);
+          dots.forEach(d => d.classList.remove('active'));
+          if (dots[index]) dots[index].classList.add('active');
+
+          const progress = ((index + 1) / slides.length) * 100;
+          progressBar.style.width = progress + '%';
+        }
+      });
+    }, {
+      root: deck,
+      threshold: 0.55
+    });
+
+    slides.forEach(slide => observer.observe(slide));
+
+    // Keyboard Navigation (Arrow Keys)
+    window.addEventListener('keydown', (e) => {
+      const activeIndex = slides.findIndex(s => s.classList.contains('active'));
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        if (activeIndex < slides.length - 1) {
+          slides[activeIndex + 1].scrollIntoView({ behavior: 'smooth' });
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        if (activeIndex > 0) {
+          slides[activeIndex - 1].scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
