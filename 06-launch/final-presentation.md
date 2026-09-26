@@ -48,4 +48,4 @@ OUTPUT — return only the complete HTML file in one code block, ready to save a
 
 ## Link to the published deck
 
-_[link to your final-presentation.html — e.g. a GitHub Pages URL]_
+file:///Users/samhitar/Downloads/gemini-code-1790445124739.html 
